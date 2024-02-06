@@ -2,10 +2,13 @@
 #bash
 #pip install beautifulsoup4
 #pip install pandas
+#pip install pandasql
 
+# Import the necessary packages
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from pandasql import sqldf
 
 url = "https://www.fangraphs.com/leaders/major-league?pos=all&stats=pit&type=8"
 
@@ -46,19 +49,33 @@ if response.status_code == 200:
         # Save the data inside the array
         stats.append([rank,
                      pitcher_name,
+                     team,
                      era,
                      fip,
                      war
         ])
 
-        # Print the extracted information (for debugging purposes)
-        #print(f'{rank}. {pitcher_name} - Team: {team}, ERA: {era}, FIP: {fip}, WAR: {war}')
+        # Print the extracted information as simple text
+        print(f'{rank}. {pitcher_name} - Team: {team}, ERA: {era}, FIP: {fip}, WAR: {war}')
+
+    
+    # Create the dataframe for the stats
+    df = pd.DataFrame(stats, columns=['rank', 'pitcher_name', 'team', 'era', 'fip', 'war'])
+
+    # Print the dataframe
+    print(f'\n{df}')
+
+    # Query the dataframe to extract data using SQL
+    print('\nUsing PandaSQL')
+    print(sqldf('''SELECT *
+                    FROM df 
+                    WHERE war >= 5
+                    ORDER BY era asc'''
+    ))
+
+    # The equivalent to the query above in pure pandas syntax but with the data sorted by ERA would be like this:
+    print('\nUsing Vanilla Panda')
+    print(df[pd.to_numeric(df['war']) >= 5].sort_values(by='era', ascending=True, ignore_index=True))
+
 else:
     print(f"Failed to retrieve the page. Status Code:", {response.status_code})
-
-
-# Create the dataframe for the stats
-df = pd.DataFrame(stats, columns=['rank', 'pitcher_name', 'era', 'fip', 'war'])
-
-# Print the dataframe with the data
-print(df)
